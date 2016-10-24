@@ -20,6 +20,9 @@ def main(side):
         address = input("Input IP Address: ")
         if not address:
             address = get_last_ip()
+        elif not ip_check(address):
+            print("Invalid IP Address.")
+            return
         else: 
             write_ip(address)
         while True:
@@ -42,6 +45,21 @@ def get_last_ip():
 def write_ip(ip):
     with open(HISTORY, "w") as f:
         f.write(ip)
+
+def ip_check(ip):
+    """
+    This checks to make sure the IP is valid.
+    >>> ip_check('blah')
+    False
+    >>> ip_check('192.168.1.76')
+    True
+    """
+    try:
+        socket.inet_aton(ip)
+    except OSError:
+        return False
+    else:
+        return True
 
 class Client:
     def __init__(self, address):
