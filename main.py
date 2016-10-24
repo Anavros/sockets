@@ -18,7 +18,9 @@ def main(side):
     """
     if side == 'client':
         address = input("Input IP Address: ")
-        Client(address).fire()
+        while True:
+            new_message = input("Enter a message to send the server or ctrl+c to quit: ")
+            Client(address).fire(new_message)
     elif side == 'server':
         Server().start()
     else:
@@ -31,12 +33,12 @@ class Client:
         self.port = PORT
         self.socket = None
 
-    def fire(self):
-        print('Sending message: "{}".'.format(MESSAGE))
+    def fire(self, new_message):
+        print('Sending message: "{}".'.format(new_message))
         # AF_INET == internet/ipv4, SOCK_STREAM == TCP
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
-        self.socket.send(MESSAGE.encode())
+        self.socket.send(new_message.encode())
         data = self.socket.recv(BUF_SIZE).decode()
         self.socket.close()
         print('Recieved response: "{}".'.format(data))
