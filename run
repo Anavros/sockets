@@ -1,2 +1,3 @@
 #!/bin/bash
-python3.4 main.py $1
+shift  # removes program name
+python3.4 main.py $@
