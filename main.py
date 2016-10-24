@@ -87,8 +87,8 @@ class Server:
                 client.close()
 
     def gen_message(self, data, n):
-        return "{}\nYou have sent {} messages over this server's lifetime."\
-            .format(data, n).encode()
+        return "\"{}\"\nYou have sent {} messages over this server's lifetime."\
+            .format(data.decode(), n).encode()
 
 
 if __name__ == '__main__':

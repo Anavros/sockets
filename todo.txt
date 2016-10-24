@@ -1,0 +1,6 @@
+
+Client:
+-> Remove crash message when using ctrl-c to exit.
+-> Send an automatic message to make sure the server will respond.
+Server:
+-> Format the return message better.
