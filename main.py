@@ -23,7 +23,11 @@ def main(side):
         else: 
             write_ip(address)
         while True:
-            new_message = input("Enter a message to send the server or ctrl+c to quit: ")
+            try:
+                new_message = input("Enter a message to send the server or ctrl+c to quit: ")
+            except KeyboardInterrupt:
+                print("\nExiting client.")
+                break
             Client(address).fire(new_message)
     elif side == 'server':
         Server().start()
