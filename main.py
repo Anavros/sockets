@@ -49,6 +49,7 @@ class Server:
         self.host = ''
         self.port = PORT
         self.socket = None
+        self.message_count = 0
 
     def start(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,12 +63,20 @@ class Server:
                 data = client.recv(BUF_SIZE)
                 if data:
                     # the echo
-                    client.send(data.upper())
-            except (KeyboardInterrupt, OSError) as e:
-                print("Error: ", e)
+                    self.message_count += 1
+                    client.send(self.gen_message(data, self.message_count))
+            except OSError as e:
+                print("OSError: ", e)
+                running = False
+            except KeyboardInterrupt:
+                print("Halting server.")
                 running = False
             finally:
                 client.close()
+
+    def gen_message(self, data, n):
+        return "{}\nYou have sent {} messages over this server's lifetime."\
+            .format(data, n).encode()
 
 
 if __name__ == '__main__':
