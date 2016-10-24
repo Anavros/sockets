@@ -7,7 +7,7 @@ import socket
 
 PORT = 50002
 BUF_SIZE = 1024
-MESSAGE = 'Hello!'
+HISTORY = "history"
 
 
 def main(side):
@@ -18,6 +18,10 @@ def main(side):
     """
     if side == 'client':
         address = input("Input IP Address: ")
+        if not address:
+            address = get_last_ip()
+        else: 
+            write_ip(address)
         while True:
             new_message = input("Enter a message to send the server or ctrl+c to quit: ")
             Client(address).fire(new_message)
@@ -26,6 +30,14 @@ def main(side):
     else:
         raise ValueError("Side must be either client or server.")
 
+def get_last_ip():
+    with open(HISTORY, "r") as f:
+        ip = f.read()
+    return ip
+
+def write_ip(ip):
+    with open(HISTORY, "w") as f:
+        f.write(ip)
 
 class Client:
     def __init__(self, address):
