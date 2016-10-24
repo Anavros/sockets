@@ -1,6 +1,6 @@
 
 Client:
--> Remove crash message when using ctrl-c to exit.
+-> Use a phone book to store ip addresses.
 -> Send an automatic message to make sure the server will respond.
 Server:
 -> Format the return message better.
