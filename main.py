@@ -10,13 +10,14 @@ BUF_SIZE = 1024
 MESSAGE = 'Hello!'
 
 
-def main(side, address):
+def main(side):
     """
     Networking tests using sockets.
     >>> bool('Using doctests?')
     True
     """
     if side == 'client':
+        address = input("Input IP Address: ")
         Client(address).fire()
     elif side == 'server':
         Server().start()
@@ -70,14 +71,13 @@ class Server:
 if __name__ == '__main__':
     from sys import argv
     # ./run client [ip address]
-    if len(argv) != 3:
+    if len(argv) != 2:
         print("The length of the argument is incorrect")
     elif argv[1] not in ['client', 'server']:
-        print("Usage: run <client|server> <ip address>")
+        print("Usage: run <client|server>")
     else:
         side = argv[1]
-        address = argv[2]
-        main(side, address)
+        main(side)
 
 
 
