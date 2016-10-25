@@ -19,13 +19,13 @@ class Client:
         self.socket.close()
         print('Recieved response: "{}".'.format(data))
 
-    def connect(self, address, port):
+    def connect(self):
         """
         Connect to a given host and port.
         Meant for long-term connections.
         """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((address, port))  # probably throws errors
+        self.socket.connect((self.host, self.port))  # probably throws errors
         self.connected = True
 
     def disconnect(self):

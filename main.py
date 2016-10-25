@@ -37,7 +37,10 @@ def main():
 
     elif side == 'server':
         print("Starting server on port {}...".format(PORT))
-        start_server_session(Server(PORT, BUF_SIZE))
+        try:
+            start_server_session(Server(PORT, BUF_SIZE))
+        except KeyboardInterrupt:
+            print(" Halting server due to keyboard interrupt...")
         print("Server process ended.")
 
     # If the second argument is not either 'client' or 'server':
@@ -45,6 +48,7 @@ def main():
 
 
 def start_client_session(client):
+    client.connect()
     while True:
         try:
             new_message = input("Enter a message (ctrl+c to quit): ")
@@ -52,11 +56,30 @@ def start_client_session(client):
             print("\nExiting client.")
             break
         else:
-            client.fire(new_message)
-
+            return_message = client.exchange(new_message)
+            print(return_message)
+    client.disconnect()
 
 def start_server_session(server):
     server.start()
+    while True:
+        # Can handle multiple clients one at a time.
+        server.wait_for_client()
+        print("Received connection from client at {}.".format(server.client_address))
+        while True:
+            # KeyboardInterrupts will break this loop.
+            # It's handled up one level, when this is called from main().
+            message = server.wait_for_message()
+            # If the client disconnects, the message will be an empty string.
+            if message:
+                print("Received message from client: '{}'".format(message))
+                server.send(message.upper())
+            else:
+                print("Connection closed by client.")
+                break
+        print("Disconnecting client {}.".format(server.client_address))
+        server.disconnect()
+    server.stop()
 
 
 def get_address_from_user():
