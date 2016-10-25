@@ -4,47 +4,92 @@ Basic networking tests. Send messages from one computer to another.
 """
 
 import socket
+from sys import argv
+
+from client import Client
+from server import Server
 
 PORT = 50002
 BUF_SIZE = 1024
 HISTORY = "history"
 
 
-def main(side):
+def main():
     """
     Networking tests using sockets.
     >>> bool('Using doctests?')
     True
     """
+    # Moved startup/argument parsing code into main().
+    usage_message = "Usage: run <client|server>"
+    if len(argv) != 2:
+        # Print usage and quit early if the wrong number of args is given.
+        print(usage_message)
+        return
+
+    side = argv[1]
     if side == 'client':
-        address = input("Input IP Address: ")
-        if not address:
-            address = get_last_ip()
-        elif not ip_check(address):
-            print("Invalid IP Address.")
-            return
-        else: 
-            write_ip(address)
-        while True:
-            try:
-                new_message = input("Enter a message to send the server or ctrl+c to quit: ")
-            except KeyboardInterrupt:
-                print("\nExiting client.")
-                break
-            Client(address).fire(new_message)
+        address = get_address_from_user()
+        print("Starting client session targeting address {} on port {}..."\
+            .format(address, PORT))
+        start_client_session(Client(address, PORT, BUF_SIZE))
+        print("Client session ended.")
+
     elif side == 'server':
-        Server().start()
+        print("Starting server on port {}...".format(PORT))
+        start_server_session(Server(PORT, BUF_SIZE))
+        print("Server process ended.")
+
+    # If the second argument is not either 'client' or 'server':
+    else: raise ValueError("Side must be either client or server.")
+
+
+def start_client_session(client):
+    while True:
+        try:
+            new_message = input("Enter a message (ctrl+c to quit): ")
+        except KeyboardInterrupt:
+            print("\nExiting client.")
+            break
+        else:
+            client.fire(new_message)
+
+
+def start_server_session(server):
+    server.start()
+
+
+def get_address_from_user():
+    last_used = get_last_ip()
+    address = input("Input IP Address (enter to use {}): ".format(last_used))
+    if not address:
+        return last_used
+    if address == 'localhost' or ip_check(address):
+        write_ip(address)
+        return address
     else:
-        raise ValueError("Side must be either client or server.")
+        print("Invalid IP Address.")
+        raise SystemExit  # hacky
+
 
 def get_last_ip():
+    """
+    Read the last-used ip address from the history file.
+    Returns a string which can be directly used as a host name.
+    """
     with open(HISTORY, "r") as f:
         ip = f.read()
     return ip
 
+
 def write_ip(ip):
+    """
+    Overwrite the history file with the given ip address.
+    Only one address, the most recently used, will be in the file at any time.
+    """
     with open(HISTORY, "w") as f:
         f.write(ip)
+
 
 def ip_check(ip):
     """
@@ -61,72 +106,6 @@ def ip_check(ip):
     else:
         return True
 
-class Client:
-    def __init__(self, address):
-        self.host = address
-        self.port = PORT
-        self.socket = None
-
-    def fire(self, new_message):
-        print('Sending message: "{}".'.format(new_message))
-        # AF_INET == internet/ipv4, SOCK_STREAM == TCP
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))
-        self.socket.send(new_message.encode())
-        data = self.socket.recv(BUF_SIZE).decode()
-        self.socket.close()
-        print('Recieved response: "{}".'.format(data))
-
-
-class Server:
-    def __init__(self):
-        self.host = ''
-        self.port = PORT
-        self.socket = None
-        self.message_count = 0
-
-    def start(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind((self.host, self.port))
-        self.socket.listen(4)  # backlog
-        running = True
-        while running:
-            try:
-                client, address = self.socket.accept()
-                data = client.recv(BUF_SIZE)
-                if data:
-                    # the echo
-                    self.message_count += 1
-                    client.send(self.gen_message(data, self.message_count))
-            except OSError as e:
-                print("OSError: ", e)
-                running = False
-            except KeyboardInterrupt:
-                print("Halting server.")
-                running = False
-            finally:
-                client.close()
-
-    def gen_message(self, data, n):
-        return "\"{}\"\nYou have sent {} messages over this server's lifetime."\
-            .format(data.decode(), n).encode()
-
 
 if __name__ == '__main__':
-    from sys import argv
-    # ./run client [ip address]
-    if len(argv) != 2:
-        print("The length of the argument is incorrect")
-    elif argv[1] not in ['client', 'server']:
-        print("Usage: run <client|server>")
-    else:
-        side = argv[1]
-        main(side)
-
-
-
-
-
-
-
+    main()
