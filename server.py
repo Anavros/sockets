@@ -46,7 +46,7 @@ class Server:
             raise IOError("Server must be running to send messages!")
         if not self.connected:
             raise IOError("Server must be connected to a client to send messages!")
-        self.client.send(message.encode())
+        self.client.sendall(message.encode())
 
 
 class User:

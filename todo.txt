@@ -2,5 +2,9 @@
 Client:
 -> Use a phone book to store ip addresses.
 -> Send an automatic message to make sure the server will respond.
+-> Use malt to make a more richly-featured command loop.
 Server:
--> Format the return message better.
+-> Allow users to specify a user name.
+-> Record a log of posts for all users to see.
+-> Allow simultaneous connections.
+-> Allow clients to send messages to each other.
