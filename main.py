@@ -63,24 +63,6 @@ def start_server_session(server):
         server.loop()
     except KeyboardInterrupt:
         print(" Halting server due to keyboard interrupt...")
-#    while True:
-#        # Can handle multiple clients one at a time.
-#        server.wait_for_client()
-#        print("Received connection from client at {}.".format(
-#            server.client_address))
-#        while True:
-#            # KeyboardInterrupts will break this loop.
-#            # It's handled up one level, when this is called from main().
-#            message = server.wait_for_message()
-#            # If the client disconnects, the message will be an empty string.
-#            if message:
-#                print("Received message from client: '{}'".format(message))
-#                server.send(message.upper())
-#            else:
-#                print("Connection closed by client.")
-#                break
-#        print("Disconnecting client {}.".format(server.client_address))
-#        server.disconnect()
     server.stop()
 
 
