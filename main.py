@@ -4,6 +4,7 @@ Basic networking tests. Send messages from one computer to another.
 """
 
 import socket
+import malt
 from sys import argv
 
 from client import Client
@@ -46,15 +47,17 @@ def main():
 
 def start_client_session(client):
     client.connect()
+    options = [
+        "msg s:message",
+        "name s:name",
+    ]
     while True:
-        try:
-            new_message = input("Enter a message (ctrl+c to quit): ")
-        except KeyboardInterrupt:
-            print("\nExiting client.")
-            break
-        else:
-            return_message = client.exchange(new_message)
-            print(return_message)
+        response = malt.offer(options)
+        if response.head == "msg":
+            echo = client.exchange(response.message, wait_for_return = True)
+            print(echo)
+        elif response.head == "name":
+            pass
     client.disconnect()
 
 def start_server_session(server):
