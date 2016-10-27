@@ -52,18 +52,15 @@ def start_client_session(client):
     client.connect()
     client.send(client.username, header = "name")
     options = [
-        "msg s:message",
         "name s:name",
         "read"
     ]
     while True:
-        response = malt.offer(options)
-        if response.head == "msg":
-            echo = client.send(response.message)
-            print(echo)
+        response = malt.offer(options, leader='/')
+        if response.noncommand:
+            client.send(response.raw_head)
         elif response.head == "name":
             client.send(response.name, header = "name")
-            pass
         elif response.head == "read":
             client.send("msg", header = "read")
             new_messages = client.check_messages(timeout = 1.0)
@@ -72,6 +69,7 @@ def start_client_session(client):
         else: 
             helpers.try_extra_functions(response, options)
     client.disconnect()
+
 
 def start_server_session(server):
     server.start()
