@@ -38,6 +38,7 @@ class Server:
 
     def receive_message(self, socket):
         user = self.users[socket]
+        # Throws IOError when client disconnect.
         message = socket.recv(self.buf_size).decode()
         if message == '':  # Empty message indicates closed socket.
             self.disconnect(socket)
@@ -47,13 +48,15 @@ class Server:
             except ValueError:
                 return
             if head == 'name':
+                # TODO: Add a notification message for name change
+                malt.log("Renaming {} to {}.".format(str(user), tail))
                 user.name = tail
             elif head == 'message':
-                self.record(tail)
-                malt.log("{}: '{}'.".format(user.name, message))
-                socket.sendall("got it".encode())
+                self.record(user.name+': '+tail)
+                malt.log("{}: '{}'.".format(user.name, tail))
             elif head == 'read':
-                socket.sendall('\n'.join(user.pending).encode())
+                malt.log("Reading messages to {}.".format(user.name))
+                socket.sendall('...'.join(user.pending).encode())
                 user.pending = []
 
     def record(self, message):

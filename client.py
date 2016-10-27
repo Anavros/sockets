@@ -60,7 +60,7 @@ class Client:
         for key, mask in self.selector.select(timeout):
             socket = key.fileobj
             message = socket.recv(self.buf_size)
-            messages.append(message)
+            messages.append(message.decode())
         return messages
 
     def test_connection():
