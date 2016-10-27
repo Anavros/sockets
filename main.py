@@ -12,7 +12,8 @@ from server import Server
 
 PORT = 50002
 BUF_SIZE = 1024
-HISTORY = "history"
+IP_HISTORY = "ip_history"
+NAME_HISTORY = "name_history"
 
 
 def main():
@@ -30,7 +31,8 @@ def main():
 
     side = argv[1]
     if side == 'client':
-        username, address = get_user_info()
+        username = get_username()
+        address = get_address()
         print("Starting client session targeting address {} on port {}..."\
             .format(address, PORT))
         start_client_session(Client(username, address, PORT, BUF_SIZE))
@@ -69,18 +71,38 @@ def start_server_session(server):
     server.stop()
 
 
-def get_user_info():
-    last_used = get_last_ip()
-    username = input("Enter your username: ")
-    address = input("Input IP Address (enter to use {}): ".format(last_used))
+def get_username():
+    name_history = get_last_name()
+    username = input("Enter your username (enter to use {}): ".format(name_history))
+    if username == "":
+        if name_history == "":
+            username = "Anon"
+        else:
+            username = name_history
+    else:
+        write_name(username)
+    return username
+
+def get_address():
+    ip_history = get_last_ip()
+    address = input("Input IP address (enter to use {}): ".format(ip_history))
     if not address:
-        return username, last_used
+        return ip_history
     if address == 'localhost' or ip_check(address):
         write_ip(address)
-        return username, address
+        return address
     else:
         print("Invalid IP Address.")
         raise SystemExit  # hacky
+
+def get_last_name():
+    with open(NAME_HISTORY, "r") as f:
+        name = f.read()
+    return name
+
+def write_name(name):
+    with open(NAME_HISTORY, "w") as f:
+        name = f.write(name)
 
 
 def get_last_ip():
@@ -88,7 +110,7 @@ def get_last_ip():
     Read the last-used ip address from the history file.
     Returns a string which can be directly used as a host name.
     """
-    with open(HISTORY, "r") as f:
+    with open(IP_HISTORY, "r") as f:
         ip = f.read()
     return ip
 
@@ -98,7 +120,7 @@ def write_ip(ip):
     Overwrite the history file with the given ip address.
     Only one address, the most recently used, will be in the file at any time.
     """
-    with open(HISTORY, "w") as f:
+    with open(IP_HISTORY, "w") as f:
         f.write(ip)
 
 
