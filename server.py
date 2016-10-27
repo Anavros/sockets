@@ -13,7 +13,6 @@ class Server:
         self.socket = None
         self.selector = DefaultSelector()
         self.running = False
-
         self.users = {}
         self.log = []
 
@@ -45,6 +44,7 @@ class Server:
                 user.name = message
             else:
                 print("{}: '{}'.".format(user.name, message))
+                socket.sendall(message.encode())
 
     def connect(self, server):
         client, addr = server.accept()
@@ -74,6 +74,7 @@ class User:
         self.address = ip
         self.port = port
         self.name = None
+        self.pending = []
 
     def __str__(self):
         return "{}:{}".format(self.address, self.port)
