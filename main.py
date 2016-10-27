@@ -5,6 +5,7 @@ Basic networking tests. Send messages from one computer to another.
 
 import socket
 import malt
+import malt.helpers as helpers 
 from sys import argv
 
 from client import Client
@@ -68,6 +69,8 @@ def start_client_session(client):
             new_messages = client.check_messages(timeout = 1.0)
             for message in new_messages:
                 print(message)
+        else: 
+            helpers.try_extra_functions(response, options)
     client.disconnect()
 
 def start_server_session(server):
