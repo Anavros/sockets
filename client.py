@@ -34,33 +34,19 @@ class Client:
         self.connected = False
         self.socket.close()
 
-    def exchange(self, message, header='message', wait_for_return=False):
-        """
-        Send a message to the connected server.
-        Must already be connected before sending messages.
-        Returns decoded strings received from the server.
-        """
+    def send(self, message, header='message'):
         if not self.connected: raise IOError(
             "Client must be connected to a server before sending messages!")
-        # A little hacky. If the user enters nothing, it will stall the program.
-        # There's probably a better way to handle this, but it will work for now.
-        if not message: return ''
+        if not message: return
         self.socket.sendall((header+':'+message).encode())
-        if wait_for_return:
-            received = self.socket.recv(self.buf_size).decode()
-            return received
-        else:
-            return ''
-
-    def send(self, message, header='message'):
-        self.exchange(message, header, wait_for_return=False)
 
     def check_messages(self, timeout=0.0):
         messages = []
         for key, mask in self.selector.select(timeout):
             socket = key.fileobj
-            message = socket.recv(self.buf_size)
-            messages.append(message.decode())
+            data = socket.recv(self.buf_size).decode()
+            for message in data.split('\0'):
+                messages.append(message)
         return messages
 
     def test_connection():

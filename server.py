@@ -56,7 +56,7 @@ class Server:
                 malt.log("{}: '{}'.".format(user.name, tail))
             elif head == 'read':
                 malt.log("Reading messages to {}.".format(user.name))
-                socket.sendall('...'.join(user.pending).encode())
+                socket.sendall('\0'.join(user.pending).encode())
                 user.pending = []
 
     def record(self, message):
