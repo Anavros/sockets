@@ -31,7 +31,7 @@ class Client:
         self.connected = False
         self.socket.close()
 
-    def exchange(self, message):
+    def exchange(self, message, wait_for_return=False):
         """
         Send a message to the connected server.
         Must already be connected before sending messages.
@@ -43,8 +43,11 @@ class Client:
         # There's probably a better way to handle this, but it will work for now.
         if not message: return ''
         self.socket.sendall(message.encode())
-        received = self.socket.recv(self.buf_size).decode()
-        return received
+        if wait_for_return:
+            received = self.socket.recv(self.buf_size).decode()
+            return received
+        else:
+            return ''
 
     def test_connection():
         """

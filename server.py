@@ -13,10 +13,6 @@ class Server:
         self.socket = None
         self.running = False
 
-        self.client = None
-        self.client_address = None
-        self.connected = False
-
         self.users = []
         self.log = []
 
@@ -39,14 +35,37 @@ class Server:
     def _read_inputs(self, inputs):
         for i in inputs:
             if i == self.socket:
-                # Accept a new incoming connection.
-                client, addr = i.accept()
-                self.users.append(User(client, addr))
-                print("Received connection from client at {}.".format(addr))
+                self.connect(i)
             else:
-                # Received a message from a client.
-                message = i.recv(self.buf_size).decode()
-                print("Received message: '{}'.".format(message))
+                self.receive_message(i)
+
+    def receive_message(self, sock):
+        user = self.find_user_by_socket(sock)
+        message = sock.recv(self.buf_size).decode()
+        if message == '':
+            # Empty message indicates closed socket.
+            self.disconnect(user)
+        else:
+            if user.name is None:
+                user.name = message
+            else:
+                print("{}: '{}'.".format(user.name, message))
+
+    def connect(self, socket):
+        client, addr = socket.accept()
+        self.users.append(User(client, addr))
+        print("Received connection from client at {}.".format(addr))
+
+    def disconnect(self, user):
+        user.socket.close()
+        self.users.remove(user)
+        print("Client at {} has disconnected.".format(user.address))
+
+    def find_user_by_socket(self, socket):
+        for user in self.users:
+            if user.socket == socket:
+                return user
+        raise ValueError("Socket->User lookup failed!")
 
     def stop(self):
         """
@@ -55,56 +74,14 @@ class Server:
         self.running = False
         self.socket.close()
 
-    def wait_for_client(self):
-        """
-        Wait for an incoming connection. Stores the client socket and address
-        as member variables.
-        """
-        self.client, self.client_address = self.socket.accept()
-        name = "Nobody"
-        self.users[name] = User(self.client, self.client_address, name)
-        self.connected = True
-        self.current_user = name
-
-    def disconnect(self):
-        """
-        Close the client socket and reset vars to None.
-        """
-        self.connected = False
-        self.client.close()
-        self.client = None
-        self.client_address = None
-
-    def wait_for_message(self):
-        """
-        Wait for and return a message from a connected client.
-        Server must be running and connected to a client. Throws IOError if not.
-        """
-        if not self.running:
-            raise IOError("Server must be running to receive messages!")
-        if not self.connected:
-            raise IOError(
-                "Server must be connected to a client to receive messages!")
-        return self.client.recv(self.buf_size).decode()
-
-    def send(self, message):
-        """
-        Send a message to a connected client.
-        Server must be running and connected to a client. Throws IOError if not.
-        """
-        if not self.running:
-            raise IOError("Server must be running to send messages!")
-        if not self.connected:
-            raise IOError(
-                "Server must be connected to a client to send messages!")
-        self.client.sendall(message.encode())
-
 
 class User:
-    def __init__(self, socket, address, username='None'):
+    def __init__(self, socket, address, name=None):
         self.socket = socket
         ip, port = address
         self.address = ip
         self.port = port
-        self.username = username
-        self.connected = False
+        self.name = name
+
+    def __str__(self):
+        return "{}@{}:{}".format(self.name, self.address, self.port)
