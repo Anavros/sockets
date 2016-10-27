@@ -2,6 +2,8 @@
 import socket
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 
+import malt
+
 class Server:
     """
     A simple echo server. Connects to one client at a time.
@@ -40,11 +42,24 @@ class Server:
         if message == '':  # Empty message indicates closed socket.
             self.disconnect(socket)
         else:
-            if user.name is None:
-                user.name = message
-            else:
-                print("{}: '{}'.".format(user.name, message))
-                socket.sendall(message.encode())
+            try:
+                head, tail = decode_message(message)
+            except ValueError:
+                return
+            if head == 'name':
+                user.name = tail
+            elif head == 'message':
+                self.record(tail)
+                malt.log("{}: '{}'.".format(user.name, message))
+                socket.sendall("got it".encode())
+            elif head == 'read':
+                socket.sendall('\n'.join(user.pending).encode())
+                user.pending = []
+
+    def record(self, message):
+        self.log.append(message)
+        for user in self.users.values():
+            user.pending.append(message)
 
     def connect(self, server):
         client, addr = server.accept()
@@ -78,3 +93,10 @@ class User:
 
     def __str__(self):
         return "{}:{}".format(self.address, self.port)
+
+
+def decode_message(message):
+    if ':' not in message:
+        raise ValueError("Message does not contain header.")
+    head, tail = message.split(':', 1)
+    return head, tail

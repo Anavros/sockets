@@ -1,5 +1,6 @@
 
 import socket
+from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 
 class Client:
     """
@@ -13,6 +14,8 @@ class Client:
         self.buf_size = buf_size
         self.socket = None
         self.connected = False
+        self.selector = DefaultSelector()
+        self.messages = []
 
     def connect(self):
         """
@@ -21,8 +24,8 @@ class Client:
         """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))  # probably throws errors
+        self.selector.register(self.socket, EVENT_READ)
         self.connected = True
-        response = self.exchange(self.username)
 
     def disconnect(self):
         """
@@ -31,7 +34,7 @@ class Client:
         self.connected = False
         self.socket.close()
 
-    def exchange(self, message, wait_for_return=False):
+    def exchange(self, message, header='message', wait_for_return=False):
         """
         Send a message to the connected server.
         Must already be connected before sending messages.
@@ -42,12 +45,23 @@ class Client:
         # A little hacky. If the user enters nothing, it will stall the program.
         # There's probably a better way to handle this, but it will work for now.
         if not message: return ''
-        self.socket.sendall(message.encode())
+        self.socket.sendall((header+':'+message).encode())
         if wait_for_return:
             received = self.socket.recv(self.buf_size).decode()
             return received
         else:
             return ''
+
+    def send(self, message, header='message'):
+        self.exchange(message, header, wait_for_return=False)
+
+    def check_messages(self, timeout=0.0):
+        messages = []
+        for key, mask in self.selector.select(timeout):
+            socket = key.fileobj
+            message = socket.recv(self.buf_size)
+            messages.append(message)
+        return messages
 
     def test_connection():
         """
