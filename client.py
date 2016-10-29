@@ -1,20 +1,38 @@
 
 import socket
-from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
+from sys import stdin
+from select import select
+from constants import PORT, BUF_SIZE
+
+
+def start_session(username, address):
+    client = Client(username, address)
+    client.connect()
+    client.send(client.username, header = "name")
+    while True:
+        #print('tick', flush=True)
+        if client.new_messages():
+            #print("New messages!", flush=True)
+            for msg in client.get_messages():
+                if msg: print(msg, flush=True)
+        if client.new_user_input():
+            #print("User input is ready!", flush=True)
+            text = client.get_user_input()
+            client.send(text)
+    client.disconnect()
+
 
 class Client:
     """
     A simple client which connects to one server and can send any number of
     simple messages before closing.
     """
-    def __init__(self, username, address, port, buf_size):
+    def __init__(self, username, address):
         self.username = username
         self.host = address
-        self.port = port
-        self.buf_size = buf_size
         self.socket = None
         self.connected = False
-        self.selector = DefaultSelector()
+        self.errmsg = "Client must be connected to a server before communicating!"
         self.messages = []
 
     def connect(self):
@@ -23,8 +41,7 @@ class Client:
         Meant for long-term connections.
         """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))  # probably throws errors
-        self.selector.register(self.socket, EVENT_READ)
+        self.socket.connect((self.host, PORT))  # probably throws errors
         self.connected = True
 
     def disconnect(self):
@@ -34,23 +51,37 @@ class Client:
         self.connected = False
         self.socket.close()
 
+    # if client.new_messages(): client.get_messages()
+    def new_messages(self):
+        """
+        Perform a non-blocking check on either self.socket.
+        Returns True if socket is ready for reading.
+        """
+        ready, _, _ = select([self.socket], [], [], 0.0)
+        return self.socket in ready
+
+    def get_messages(self):
+        """
+        Receive new messages from the server.
+        Check if new_messages() before calling; this will block otherwise.
+        """
+        data = self.socket.recv(BUF_SIZE).decode()
+        return data.split('\0')
+
+    def new_user_input(self):
+        """
+        Returns True if the user has entered new input on STDIN.
+        Calls to input() should not block when this returns True.
+        """
+        ready, _, _ = select([stdin], [], [], 0.0)
+        return stdin in ready
+
+    def get_user_input(self):
+        return stdin.readline().strip()
+
     def send(self, message, header='message'):
-        if not self.connected: raise IOError(
-            "Client must be connected to a server before sending messages!")
+        """
+        Send a message with optional header to the connected server.
+        """
         if not message: return
         self.socket.sendall((header+':'+message).encode())
-
-    def check_messages(self, timeout=0.0):
-        messages = []
-        for key, mask in self.selector.select(timeout):
-            socket = key.fileobj
-            data = socket.recv(self.buf_size).decode()
-            for message in data.split('\0'):
-                messages.append(message)
-        return messages
-
-    def test_connection():
-        """
-        Send a probe packet to the server to ensure the connection works.
-        """
-        pass

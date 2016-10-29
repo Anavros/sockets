@@ -4,18 +4,11 @@ Basic networking tests. Send messages from one computer to another.
 """
 
 import socket
-import malt
-import malt.helpers as helpers 
 from sys import argv
 
-from client import Client
-from server import Server
-
-PORT = 50002
-BUF_SIZE = 1024
-IP_HISTORY = "ip_history"
-NAME_HISTORY = "name_history"
-
+import client
+import server
+from constants import PORT, BUF_SIZE, IP_HISTORY, NAME_HISTORY
 
 def main():
     """
@@ -36,48 +29,14 @@ def main():
         address = get_address()
         print("Starting client session targeting address {} on port {}..."\
             .format(address, PORT))
-        start_client_session(Client(username, address, PORT, BUF_SIZE))
+        client.start_session(username, address)
         print("Client session ended.")
-
     elif side == 'server':
         print("Starting server on port {}...".format(PORT))
-        start_server_session(Server(PORT, BUF_SIZE))
+        server.start_session()
         print("Server process ended.")
-
     # If the second argument is not either 'client' or 'server':
     else: raise ValueError("Side must be either client or server.")
-
-
-def start_client_session(client):
-    client.connect()
-    client.send(client.username, header = "name")
-    options = [
-        "name s:name",
-        "read"
-    ]
-    while True:
-        response = malt.offer(options, leader='/')
-        if response.noncommand:
-            client.send(response.raw_head)
-        elif response.head == "name":
-            client.send(response.name, header = "name")
-        elif response.head == "read":
-            client.send("msg", header = "read")
-            new_messages = client.check_messages(timeout = 1.0)
-            for message in new_messages:
-                print(message)
-        else: 
-            helpers.try_extra_functions(response, options)
-    client.disconnect()
-
-
-def start_server_session(server):
-    server.start()
-    try:
-        server.loop()
-    except KeyboardInterrupt:
-        print(" Halting server due to keyboard interrupt...")
-    server.stop()
 
 
 def get_username():
@@ -92,6 +51,7 @@ def get_username():
         write_name(username)
     return username
 
+
 def get_address():
     ip_history = get_last_ip()
     address = input("Input IP address (enter to use {}): ".format(ip_history))
@@ -104,10 +64,12 @@ def get_address():
         print("Invalid IP Address.")
         raise SystemExit  # hacky
 
+
 def get_last_name():
     with open(NAME_HISTORY, "r") as f:
         name = f.read()
     return name
+
 
 def write_name(name):
     with open(NAME_HISTORY, "w") as f:
