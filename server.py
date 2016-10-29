@@ -1,14 +1,15 @@
 
-import socket
-from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
-from time import sleep
-
 import malt
-
+import socket
+from time import sleep
 from constants import PORT, BUF_SIZE
+from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 
 
 def start_session():
+    """
+    Run a basic server session. Halts on KeyboardInterrupt.
+    """
     server = Server()
     server.start()
     try:
@@ -20,7 +21,7 @@ def start_session():
 
 class Server:
     """
-    A simple echo server. Connects to one client at a time.
+    A simple messaging server. Connects to one client at a time.
     """
     def __init__(self):
         self.host = ''
@@ -50,6 +51,9 @@ class Server:
         self.socket.close()
 
     def connect(self, server):
+        """
+        Add a new user for an incoming client. Blocks, so call after select.
+        """
         client, addr = server.accept()
         user = User(addr)
         self.users[client] = User(addr)
@@ -57,20 +61,26 @@ class Server:
         print("Received connection from client at {}.".format(str(user)))
 
     def disconnect(self, s):
+        """Remove a user and close their socket."""
         name = str(self.users[s])
         del self.users[s]
         s.close()
         self.selector.unregister(s)
         print("Client at {} has disconnected.".format(name))
 
-    def loop(self, timeout=0.0):
+    def loop(self):
+        """
+        Infinitely read and write messages, with a small delay to prevent
+        hogging up cpu time.
+        """
         while True:
-            self.select(timeout)
+            self.select()
             self.flush_messages()
             sleep(0.1)
 
-    def select(self, timeout):
-        for key, mask in self.selector.select(timeout):
+    def select(self):
+        """Select and operate on any ready socket."""
+        for key, mask in self.selector.select(0.0):
             socket = key.fileobj
             if socket == self.socket:  # server message, client connecting.
                 self.connect(socket)
@@ -80,6 +90,7 @@ class Server:
                 malt.log("Unknown selector event? {}".format(socket))
 
     def flush_messages(self):
+        """Send pending messages to all users."""
         for socket, user in self.users.items():
             if user.pending:
                 malt.log("Sending messages to {}.".format(user.name))
@@ -87,6 +98,7 @@ class Server:
                 user.pending = []
 
     def receive_message(self, socket):
+        """Read a socket for messages. Blocks, so only call if selected."""
         user = self.users[socket]
         # Throws IOError when client disconnects.
         message = socket.recv(BUF_SIZE).decode()
@@ -110,11 +122,15 @@ class Server:
                 user.pending = []
 
     def record(self, user, message):
+        """
+        Format and record a message to both the server log and all other users
+        currently connected to the server.
+        """
         text = user.name+': '+message
-        self.log.append(message)
+        self.log.append(text)
         for other in self.users.values():
             if other != user:
-                other.pending.append(message)
+                other.pending.append(text)
 
 
 class User:
@@ -132,5 +148,6 @@ class User:
 def decode_message(message):
     if ':' not in message:
         raise ValueError("Message does not contain header.")
+    # Any ':' after the first will be ignored.
     head, tail = message.split(':', 1)
     return head, tail

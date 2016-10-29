@@ -13,30 +13,37 @@ from constants import PORT, BUF_SIZE, IP_HISTORY, NAME_HISTORY
 def main():
     """
     Networking tests using sockets.
-    >>> bool('Using doctests?')
-    True
     """
-    # Moved startup/argument parsing code into main().
-    usage_message = "Usage: run <client|server>"
-    if len(argv) != 2:
-        # Print usage and quit early if the wrong number of args is given.
-        print(usage_message)
-        return
-
-    side = argv[1]
+    side = get_side()
     if side == 'client':
-        username = get_username()
-        address = get_address()
-        print("Starting client session targeting address {} on port {}..."\
-            .format(address, PORT))
-        client.start_session(username, address)
-        print("Client session ended.")
-    elif side == 'server':
-        print("Starting server on port {}...".format(PORT))
-        server.start_session()
-        print("Server process ended.")
-    # If the second argument is not either 'client' or 'server':
-    else: raise ValueError("Side must be either client or server.")
+        run_client()
+    else:
+        run_server()
+
+
+def get_side():
+    """Parse argv and return network side of current session."""
+    side = argv[1]
+    if side in ['client', 'server']:
+        return side
+    else:
+        print("Usage: ./run <client|server>")
+        raise SystemExit
+
+
+def run_client():
+    username = get_username()
+    address = get_address()
+    print("Starting client session targeting address {} on port {}..."\
+        .format(address, PORT))
+    client.start_session(username, address)
+    print("Client session ended.")
+
+
+def run_server():
+    print("Starting server on port {}...".format(PORT))
+    server.start_session()
+    print("Server process ended.")
 
 
 def get_username():

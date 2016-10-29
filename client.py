@@ -5,6 +5,8 @@ from select import select
 from constants import PORT, BUF_SIZE
 
 
+def start_term_session(*args):
+    start_session(*args)
 def start_session(username, address):
     client = Client(username, address)
     client.connect()
@@ -22,10 +24,19 @@ def start_session(username, address):
     client.disconnect()
 
 
+# Callbacks for gui.
+def get_message_log():
+    pass
+
+
+def send_message(message):
+    pass
+
+
 class Client:
     """
     A simple client which connects to one server and can send any number of
-    simple messages before closing.
+    messages before closing.
     """
     def __init__(self, username, address):
         self.username = username
