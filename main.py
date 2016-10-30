@@ -8,6 +8,7 @@ from sys import argv
 
 import client
 import server
+from gui import MessengerApp
 from constants import PORT, BUF_SIZE, IP_HISTORY, NAME_HISTORY
 
 def main():
@@ -39,6 +40,10 @@ def run_client():
     client.start_session(username, address)
     print("Client session ended.")
 
+def run_gui_client():
+    # Client is called from within the MessengerApp __init__.
+    app = MessengerApp()
+    app.run()
 
 def run_server():
     print("Starting server on port {}...".format(PORT))

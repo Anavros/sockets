@@ -24,15 +24,6 @@ def start_session(username, address):
     client.disconnect()
 
 
-# Callbacks for gui.
-def get_message_log():
-    pass
-
-
-def send_message(message):
-    pass
-
-
 class Client:
     """
     A simple client which connects to one server and can send any number of
@@ -88,11 +79,16 @@ class Client:
         return stdin in ready
 
     def get_user_input(self):
+        """
+        Blocking call to read STDIN. Check `if new_user_input()` before
+        calling to prevent stalling the program.
+        """
         return stdin.readline().strip()
 
     def send(self, message, header='message'):
         """
         Send a message with optional header to the connected server.
+        Currently used headers are: 'message', 'name', and 'read'.
         """
         if not message: return
         self.socket.sendall((header+':'+message).encode())
