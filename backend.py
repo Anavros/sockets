@@ -6,7 +6,7 @@ Wrapper layer for the GUI to interact with a client.
 import malt
 from kivy.clock import Clock
 from client import Client
-from constants import USER_PATH
+from constants import USER_FILE
 
 
 #Example:
@@ -24,26 +24,23 @@ class MessengerApp:
 """
 
 class Backend:
-    def __init__(self)
-        self.clock = Clock()
-        self.clock.schedule_interval(read, 1.0)
+    def __init__(self):
+        Clock.schedule_interval(self.read, 1.0)
         self.username, self.host = load_user()
         self.client = Client(self.username, self.host)
         self.client.connect()
+        self.client.send(self.username, header = "name")
 
-    def __del__(self):
-        self.client.disconnect()
-
-    def read():
+    def read(self, dt):
         if self.client.new_messages():
-            for m in self.client.get_messages()
+            for m in self.client.get_messages():
                 print("[SERVER] "+m)
 
-    def send(message):
+    def send(self, message):
         self.client.send(message)
 
 
 def load_user():
-    users = malt.load(USER_PATH)
+    users = malt.load(USER_FILE)
     u = users[0]  # just use the first one for now
     return u.name, u.address
