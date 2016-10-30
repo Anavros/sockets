@@ -2,3 +2,6 @@
 __pycache__/
 *.swp
 *history
+.build/
+.templates/
+.static/
