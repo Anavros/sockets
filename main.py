@@ -16,19 +16,21 @@ def main():
     Networking tests using sockets.
     """
     side = get_side()
-    if side == 'client':
-        run_client()
-    else:
+    if side == 'gui':
+        run_gui_client()
+    elif side == 'server':
         run_server()
+    elif side == 'client':
+        run_client()
 
 
 def get_side():
     """Parse argv and return network side of current session."""
     side = argv[1]
-    if side in ['client', 'server']:
+    if side in ['client', 'server', 'gui']:
         return side
     else:
-        print("Usage: ./run <client|server>")
+        print("Usage: ./run <client|server|gui>")
         raise SystemExit
 
 
@@ -40,10 +42,11 @@ def run_client():
     client.start_session(username, address)
     print("Client session ended.")
 
+
 def run_gui_client():
-    # Client is called from within the MessengerApp __init__.
     app = MessengerApp()
     app.run()
+
 
 def run_server():
     print("Starting server on port {}...".format(PORT))
