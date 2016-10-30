@@ -1,2 +1,8 @@
 #!/bin/bash
-python3.4 main.py $*
+
+if [ "$1" == "gui" ]
+then
+    python3.4 gui.py
+else
+    python3.4 main.py $*
+fi
