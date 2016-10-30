@@ -4,9 +4,11 @@ from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.clock import Clock
+from kivy.config import Config
 from backend import Backend
 
 
@@ -37,9 +39,39 @@ class MessengerWindow(FloatLayout):
             self.chat_log.text += '\n' + message
 
 
+class SimpleMessenger(GridLayout):
+    def __init__(self, **kwargs):
+        GridLayout.__init__(self, **kwargs)
+        self.backend = Backend()
+        self.rows = 2
+        self.cols = 1
+        self.entry = TextInput(multiline=False, on_text_validate=self.send)
+        self.label = Label(text_size=(395, 95))  # little hacky to hardcode
+        self.add_widget(self.label)
+        self.add_widget(self.entry)
+        Clock.schedule_once(self.focus)
+        Clock.schedule_interval(self.show, 1.0)
+
+    def focus(self, _):
+        self.entry.focus = True
+
+    def send(self, _):
+        self.backend.send(self.entry.text)
+        self.entry.text = ""
+        Clock.schedule_once(self.focus)  # keeps focus inside text input
+
+    def show(self, _):
+        messages = self.backend.read()
+        for message in messages:
+            self.label.text += '\n' + message
+
+
 class MessengerApp(App):
     def build(self):
-        return MessengerWindow()
+        Config.set('graphics', 'width', 400)
+        Config.set('graphics', 'height', 200)
+        #return MessengerWindow()
+        return SimpleMessenger()
 
 
 if __name__ == "__main__":

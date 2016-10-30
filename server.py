@@ -129,8 +129,9 @@ class Server:
         text = user.name+': '+message
         self.log.append(text)
         for other in self.users.values():
-            if other != user:
-                other.pending.append(text)
+            #if other != user:
+            #    other.pending.append(text)
+            other.pending.append(text)
 
 
 class User:
