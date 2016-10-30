@@ -8,7 +8,6 @@ from sys import argv
 
 import client
 import server
-from gui import MessengerApp
 from constants import PORT, BUF_SIZE, IP_HISTORY, NAME_HISTORY
 
 def main():
@@ -44,6 +43,8 @@ def run_client():
 
 
 def run_gui_client():
+    # only import Kivy if using GUI, otherwise tons of log spam
+    from gui import MessengerApp
     app = MessengerApp()
     app.run()
 
