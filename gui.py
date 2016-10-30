@@ -6,7 +6,9 @@ from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.clock import Clock
 from backend import Backend
+
 
 class MessengerWindow(FloatLayout):
     def __init__(self, **kwargs):
@@ -17,6 +19,7 @@ class MessengerWindow(FloatLayout):
         self.add_widget(self.username)
         self.chat_log = (Label(text="", size_hint=(.1, .3), pos =(100,490)))
         self.add_widget(self.chat_log)
+        Clock.schedule_interval(self.show_messages, 1.0)
         self.input_box = TextInput(size_hint=(.7, .5), pos=(220,10), multiline=False)
         self.add_widget(self.input_box)
         self.send = Button(text="Send", size_hint=(.25, .5), pos=(10,10))
@@ -24,14 +27,20 @@ class MessengerWindow(FloatLayout):
         self.add_widget(self.send)
 
     def btn_pressed(self, instance):
-        print(self.input_box.text) 
+        print(self.input_box.text)
         self.backend.send(self.input_box.text)
         self.input_box.text=""
-        
+
+    def show_messages(self, dt):
+        messages = self.backend.read()
+        for message in messages:
+            self.chat_log.text += '\n' + message
+
 
 class MessengerApp(App):
     def build(self):
         return MessengerWindow()
+
 
 if __name__ == "__main__":
     MessengerApp().run()

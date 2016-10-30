@@ -25,12 +25,11 @@ def main():
 
 def get_side():
     """Parse argv and return network side of current session."""
-    side = argv[1]
-    if side in ['client', 'server', 'gui']:
-        return side
-    else:
+    if len(argv) != 2 or argv[1] not in ['client', 'server', 'gui']:
         print("Usage: ./run <client|server|gui>")
         raise SystemExit
+    else:
+        return argv[1]
 
 
 def run_client():
